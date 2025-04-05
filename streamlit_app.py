@@ -74,41 +74,35 @@ show_ma = st.sidebar.checkbox('Show Moving Average')
 # Add a checkbox to toggle Support and Resistance, enabled by default
 show_sr = st.sidebar.checkbox('Show Support and Resistance', value=True)
 
-# Add checkboxes for candlestick patterns
-show_engulfing = st.sidebar.checkbox('Show Engulfing Patterns')
-show_three_white_soldiers = st.sidebar.checkbox('Show Three White Soldiers')
-show_bullish_harami = st.sidebar.checkbox('Show Bullish Harami')
-show_harami_cross = st.sidebar.checkbox('Show Harami Cross')
+# Remove duplicate checkboxes and add unique keys
+
+# Bullish Patterns
+st.sidebar.subheader('Bullish Patterns')
+show_three_white_soldiers = st.sidebar.checkbox('Show Three White Soldiers', key='three_white_soldiers')
+show_bullish_harami = st.sidebar.checkbox('Show Bullish Harami', key='bullish_harami')
+show_harami_cross = st.sidebar.checkbox('Show Harami Cross', key='harami_cross')
+show_morning_star = st.sidebar.checkbox('Show Morning Star Pattern', key='morning_star')
+show_rising_three_methods = st.sidebar.checkbox('Show Rising Three Methods Pattern', key='rising_three_methods')
+
+# Bearish Patterns
+st.sidebar.subheader('Bearish Patterns')
+show_engulfing = st.sidebar.checkbox('Show Engulfing Patterns', key='engulfing')
+show_hanging_man = st.sidebar.checkbox('Show Hanging Man Pattern', key='hanging_man')
+show_shooting_star = st.sidebar.checkbox('Show Shooting Star Pattern', key='shooting_star')
+show_evening_star = st.sidebar.checkbox('Show Evening Star Pattern', key='evening_star')
+show_three_black_crows = st.sidebar.checkbox('Show Three Black Crows Pattern', key='three_black_crows')
+show_dark_cloud_cover = st.sidebar.checkbox('Show Dark Cloud Cover Pattern', key='dark_cloud_cover')
+show_bearish_harami = st.sidebar.checkbox('Show Bearish Harami Pattern', key='bearish_harami')
+
+# Neutral Patterns
+st.sidebar.subheader('Neutral Patterns')
+show_doji_star = st.sidebar.checkbox('Show Doji Star Pattern', key='doji_star')
+show_long_legged_doji = st.sidebar.checkbox('Show Long-Legged Doji Pattern', key='long_legged_doji')
+show_dragonfly_doji = st.sidebar.checkbox('Show Dragonfly Doji Pattern', key='dragonfly_doji')
+show_gravestone_doji = st.sidebar.checkbox('Show Gravestone Doji Pattern', key='gravestone_doji')
 
 # Add a checkbox for Hammer pattern
-show_hammer = st.sidebar.checkbox('Show Hammer Pattern')
-
-# Add a checkbox for Morning Star pattern
-show_morning_star = st.sidebar.checkbox('Show Morning Star Pattern')
-
-# Add a checkbox for Hanging Man pattern
-show_hanging_man = st.sidebar.checkbox('Show Hanging Man Pattern')
-
-# Add a checkbox for Shooting Star pattern
-show_shooting_star = st.sidebar.checkbox('Show Shooting Star Pattern')
-
-# Add a checkbox for Evening Star pattern
-show_evening_star = st.sidebar.checkbox('Show Evening Star Pattern')
-
-# Add a checkbox for Three Black Crows pattern
-show_three_black_crows = st.sidebar.checkbox('Show Three Black Crows Pattern')
-
-# Add a checkbox for Dark Cloud Cover pattern
-show_dark_cloud_cover = st.sidebar.checkbox('Show Dark Cloud Cover Pattern')
-
-# Add a checkbox for Bearish Harami pattern
-show_bearish_harami = st.sidebar.checkbox('Show Bearish Harami Pattern')
-
-# Add checkboxes for Doji patterns
-show_doji_star = st.sidebar.checkbox('Show Doji Star Pattern')
-show_long_legged_doji = st.sidebar.checkbox('Show Long-Legged Doji Pattern')
-show_dragonfly_doji = st.sidebar.checkbox('Show Dragonfly Doji Pattern')
-show_gravestone_doji = st.sidebar.checkbox('Show Gravestone Doji Pattern')
+show_hammer = st.sidebar.checkbox('Show Hammer Pattern', key='hammer')
 
 # Plot the candlestick chart
 fig_candlestick = go.Figure(data=[go.Candlestick(x=data.index,
@@ -387,6 +381,20 @@ if show_gravestone_doji:
                                        ax=0,
                                        ay=-40,
                                        bgcolor='red',
+                                       opacity=0.7)
+
+# Annotate the candlestick chart with Rising Three Methods pattern if the checkbox is checked
+if show_rising_three_methods:
+    rising_three_methods = ta.detect_rising_three_methods()
+    for pattern in rising_three_methods:
+        x, pattern_type = pattern
+        fig_candlestick.add_annotation(x=x, y=data.loc[x, 'high'],
+                                       text=pattern_type,
+                                       showarrow=True,
+                                       arrowhead=1,
+                                       ax=0,
+                                       ay=-40,
+                                       bgcolor='purple',
                                        opacity=0.7)
 
 # Plot Bollinger Bands if the checkbox is checked
