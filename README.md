@@ -28,6 +28,22 @@
    python streamlit_app.py
    ```
 
+## Running with Docker
+
+To run the application using Docker, follow these steps:
+
+1. **Build the Docker Image**:
+   ```bash
+   docker build -t tradetact .
+   ```
+
+2. **Run the Docker Container**:
+   ```bash
+   docker run -p 8501:8501 tradetact
+   ```
+
+This will start the application, and you can access it by navigating to `http://localhost:8501` in your web browser.
+
 ## Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request or open an Issue for any bugs or feature requests.
