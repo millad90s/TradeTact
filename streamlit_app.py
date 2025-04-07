@@ -11,7 +11,7 @@ exchange = ccxt.binance()
 # Fetch historical candlestick data
 symbol = 'BTC/USDT'  # Update with your desired trading pair
 timeframe = '1h'  # Update with your desired timeframe
-limit = 200  # Number of candlesticks to fetch
+limit = 100  # Number of candlesticks to fetch
 
 # Fetch data
 ohlcv = exchange.fetch_ohlcv(symbol, timeframe=timeframe, limit=limit)
@@ -104,6 +104,9 @@ show_gravestone_doji = st.sidebar.checkbox('Show Gravestone Doji Pattern', key='
 # Add a checkbox for Hammer pattern
 show_hammer = st.sidebar.checkbox('Show Hammer Pattern', key='hammer')
 
+# Add checkboxes for supply and demand zones
+show_supply_demand = st.sidebar.checkbox('Show Supply & Demand Zones', key='supply_demand', value=True)
+
 # Plot the candlestick chart
 fig_candlestick = go.Figure(data=[go.Candlestick(x=data.index,
                 open=data['open'],
@@ -117,6 +120,57 @@ if show_ma:
     ma_window = st.sidebar.slider('Moving Average Window', 5, 50, 20, key='ma_window_chart')
     moving_average = ta.moving_average(window=ma_window)
     fig_candlestick.add_trace(go.Scatter(x=data.index, y=moving_average, mode='lines', name='Moving Average', line=dict(color='orange')))
+
+# Add supply and demand zones if enabled
+if show_supply_demand:
+    # Add parameters for zone detection
+    consolidation_candles = st.sidebar.slider('Consolidation Candles (1h)', 3, 10, 5, key='consolidation_candles_1h')
+    impulse_threshold = st.sidebar.slider('Impulse Threshold (%) (1h)', 0.5, 5.0, 2.0, key='impulse_threshold_1h') / 100
+    min_zone_width = st.sidebar.slider('Minimum Zone Width (%) (1h)', 0.1, 2.0, 1.0, key='min_zone_width_1h') / 100
+
+    # Detect zones
+    zones = ta.detect_supply_demand_zones(
+        consolidation_candles=consolidation_candles,
+        impulse_threshold=impulse_threshold,
+        min_zone_width=min_zone_width
+    )
+    
+    # Debug output
+    st.write(f"Number of zones detected: {len(zones)}")
+    for zone in zones:
+        st.write(f"Zone: {zone}")
+
+    # Add zones to the chart
+    for zone_type, start_idx, end_idx, (zone_low, zone_high) in zones:
+        # Create a rectangle for the zone
+        fig_candlestick.add_shape(
+            type="rect",
+            x0=data.index[start_idx],
+            y0=zone_low,
+            x1=data.index[end_idx],
+            y1=zone_high,
+            line=dict(
+                color="green" if zone_type == "demand" else "red",
+                width=2,
+            ),
+            fillcolor="green" if zone_type == "demand" else "red",
+            opacity=0.2,
+            layer="below"
+        )
+        
+        # Add zone label
+        fig_candlestick.add_annotation(
+            x=data.index[end_idx],
+            y=zone_high if zone_type == "supply" else zone_low,
+            text=f"{zone_type.capitalize()} Zone",
+            showarrow=False,
+            font=dict(
+                color="green" if zone_type == "demand" else "red",
+                size=12
+            ),
+            bgcolor="white",
+            opacity=0.8
+        )
 
 # Function to count touches
 def count_touches(levels, prices):
@@ -679,6 +733,56 @@ if show_gravestone_doji:
                                            bgcolor='red',
                                            opacity=0.7)
 
+# Add supply and demand zones to 30-minute chart if enabled
+if show_supply_demand:
+    # Add parameters for zone detection
+    consolidation_candles_30m = st.sidebar.slider('Consolidation Candles (30m)', 3, 10, 5, key='consolidation_candles_30m')
+    impulse_threshold_30m = st.sidebar.slider('Impulse Threshold (%) (30m)', 0.5, 5.0, 2.0, key='impulse_threshold_30m') / 100
+    min_zone_width_30m = st.sidebar.slider('Minimum Zone Width (%) (30m)', 0.1, 2.0, 1.0, key='min_zone_width_30m') / 100
+
+    zones_30m = ta_30m.detect_supply_demand_zones(
+        consolidation_candles=consolidation_candles_30m,
+        impulse_threshold=impulse_threshold_30m,
+        min_zone_width=min_zone_width_30m
+    )
+
+    # Debug output for 30-minute chart
+    st.write(f"Number of zones detected (30m): {len(zones_30m)}")
+    for zone in zones_30m:
+        st.write(f"Zone (30m): {zone}")
+
+    # Add zones to the 30-minute chart
+    for zone_type, start_idx, end_idx, (zone_low, zone_high) in zones_30m:
+        # Create a rectangle for the zone
+        fig_candlestick_30m.add_shape(
+            type="rect",
+            x0=data_30m.index[start_idx],
+            y0=zone_low,
+            x1=data_30m.index[end_idx],
+            y1=zone_high,
+            line=dict(
+                color="green" if zone_type == "demand" else "red",
+                width=2,
+            ),
+            fillcolor="green" if zone_type == "demand" else "red",
+            opacity=0.2,
+            layer="below"
+        )
+        
+        # Add zone label
+        fig_candlestick_30m.add_annotation(
+            x=data_30m.index[end_idx],
+            y=zone_high if zone_type == "supply" else zone_low,
+            text=f"{zone_type.capitalize()} Zone",
+            showarrow=False,
+            font=dict(
+                color="green" if zone_type == "demand" else "red",
+                size=12
+            ),
+            bgcolor="white",
+            opacity=0.8
+        )
+
 # Update layout for better visualization
 fig_candlestick_30m.update_layout(title='30-Minute Candlestick Chart',
                                   xaxis_title='Time',
@@ -712,3 +816,93 @@ def detect_hammer(self):
             patterns.append((self.data.index[i], 'Hammer'))
 
     return patterns 
+
+if show_supply_demand:
+    # Add parameters for zone detection
+    consolidation_candles = st.sidebar.slider('Consolidation Candles', 3, 10, 5, key='consolidation_candles')
+    impulse_threshold = st.sidebar.slider('Impulse Threshold (%)', 0.5, 5.0, 2.0, key='impulse_threshold') / 100
+    min_zone_width = st.sidebar.slider('Minimum Zone Width (%)', 0.1, 2.0, 1.0, key='min_zone_width') / 100
+
+    # Detect zones
+    zones = ta.detect_supply_demand_zones(
+        consolidation_candles=consolidation_candles,
+        impulse_threshold=impulse_threshold,
+        min_zone_width=min_zone_width
+    )
+    
+    # Debug output
+    st.write(f"Number of zones detected: {len(zones)}")
+    for zone in zones:
+        st.write(f"Zone: {zone}")
+
+    # Add zones to the chart
+    for zone_type, start_idx, end_idx, (zone_low, zone_high) in zones:
+        # Create a rectangle for the zone
+        fig_candlestick.add_shape(
+            type="rect",
+            x0=data.index[start_idx],
+            y0=zone_low,
+            x1=data.index[end_idx],
+            y1=zone_high,
+            line=dict(
+                color="green" if zone_type == "demand" else "red",
+                width=2,
+            ),
+            fillcolor="green" if zone_type == "demand" else "red",
+            opacity=0.2,
+            layer="below"
+        )
+        
+        # Add zone label
+        fig_candlestick.add_annotation(
+            x=data.index[end_idx],
+            y=zone_high if zone_type == "supply" else zone_low,
+            text=f"{zone_type.capitalize()} Zone",
+            showarrow=False,
+            font=dict(
+                color="green" if zone_type == "demand" else "red",
+                size=12
+            ),
+            bgcolor="white",
+            opacity=0.8
+        )
+
+# Add the same for 30-minute chart
+if show_supply_demand:
+    zones_30m = ta_30m.detect_supply_demand_zones(
+        consolidation_candles=consolidation_candles,
+        impulse_threshold=impulse_threshold,
+        min_zone_width=min_zone_width
+    )
+
+    # Add zones to the 30-minute chart
+    for zone_type, start_idx, end_idx, (zone_low, zone_high) in zones_30m:
+        # Create a rectangle for the zone
+        fig_candlestick_30m.add_shape(
+            type="rect",
+            x0=data_30m.index[start_idx],
+            y0=zone_low,
+            x1=data_30m.index[end_idx],
+            y1=zone_high,
+            line=dict(
+                color="green" if zone_type == "demand" else "red",
+                width=2,
+            ),
+            fillcolor="green" if zone_type == "demand" else "red",
+            opacity=0.2,
+            layer="below"
+        )
+        
+        # Add zone label
+        fig_candlestick_30m.add_annotation(
+            x=data_30m.index[end_idx],
+            y=zone_high if zone_type == "supply" else zone_low,
+            text=f"{zone_type.capitalize()} Zone",
+            showarrow=False,
+            font=dict(
+                color="green" if zone_type == "demand" else "red",
+                size=12
+            ),
+            bgcolor="white",
+            opacity=0.8
+        ) 

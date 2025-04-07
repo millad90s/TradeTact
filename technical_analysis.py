@@ -50,8 +50,8 @@ class TechnicalAnalysis:
         """Calculate support and resistance levels using local minima and maxima."""
         if df is None:
             df = self.data
-        df['Support'] = df['close'][argrelextrema(df['close'].values, np.less_equal, order=order)[0]]
-        df['Resistance'] = df['close'][argrelextrema(df['close'].values, np.greater_equal, order=order)[0]]
+        df['Support'] = df['close'].iloc[argrelextrema(df['close'].values, np.less_equal, order=order)[0]]
+        df['Resistance'] = df['close'].iloc[argrelextrema(df['close'].values, np.greater_equal, order=order)[0]]
         return df['Support'], df['Resistance']
 
     def bollinger_bands(self, window=20, num_std=2):
@@ -64,12 +64,12 @@ class TechnicalAnalysis:
     def detect_three_white_soldiers(self):
         patterns = []
         for i in range(2, len(self.data)):
-            if (self.data['close'][i] > self.data['open'][i] and
-                self.data['close'][i-1] > self.data['open'][i-1] and
-                self.data['close'][i-2] > self.data['open'][i-2] and
-                self.data['close'][i] > self.data['close'][i-1] > self.data['close'][i-2] and
-                self.data['open'][i] < self.data['close'][i-1] and
-                self.data['open'][i-1] < self.data['close'][i-2]):
+            if (self.data['close'].iloc[i] > self.data['open'].iloc[i] and
+                self.data['close'].iloc[i-1] > self.data['open'].iloc[i-1] and
+                self.data['close'].iloc[i-2] > self.data['open'].iloc[i-2] and
+                self.data['close'].iloc[i] > self.data['close'].iloc[i-1] > self.data['close'].iloc[i-2] and
+                self.data['open'].iloc[i] < self.data['close'].iloc[i-1] and
+                self.data['open'].iloc[i-1] < self.data['close'].iloc[i-2]):
                 patterns.append((self.data.index[i], 'Three White Soldiers'))
         return patterns
 
@@ -290,12 +290,12 @@ class TechnicalAnalysis:
         """Detect Three Black Crows patterns."""
         patterns = []
         for i in range(2, len(self.data)):
-            if (self.data['close'][i] < self.data['open'][i] and
-                self.data['close'][i-1] < self.data['open'][i-1] and
-                self.data['close'][i-2] < self.data['open'][i-2] and
-                self.data['close'][i] < self.data['close'][i-1] < self.data['close'][i-2] and
-                self.data['open'][i] > self.data['close'][i-1] and
-                self.data['open'][i-1] > self.data['close'][i-2]):
+            if (self.data['close'].iloc[i] < self.data['open'].iloc[i] and
+                self.data['close'].iloc[i-1] < self.data['open'].iloc[i-1] and
+                self.data['close'].iloc[i-2] < self.data['open'].iloc[i-2] and
+                self.data['close'].iloc[i] < self.data['close'].iloc[i-1] < self.data['close'].iloc[i-2] and
+                self.data['open'].iloc[i] > self.data['close'].iloc[i-1] and
+                self.data['open'].iloc[i-1] > self.data['close'].iloc[i-2]):
                 patterns.append((self.data.index[i], 'Three Black Crows'))
         return patterns
 
@@ -454,4 +454,47 @@ class TechnicalAnalysis:
                     if middle_candles:
                         patterns.append((self.data.index[i], 'Rising Three Methods'))
 
-        return patterns 
+        return patterns
+
+    def detect_supply_demand_zones(self, consolidation_candles=5, impulse_threshold=0.02, min_zone_width=0.01):
+        """
+        Detect supply and demand zones based on price consolidation and impulse moves.
+        
+        Args:
+            consolidation_candles (int): Number of candles to consider for consolidation
+            impulse_threshold (float): Minimum price change to consider as an impulse move
+            min_zone_width (float): Minimum width of a zone as a percentage of price
+            
+        Returns:
+            list: List of tuples containing (zone_type, start_idx, end_idx, (zone_low, zone_high))
+        """
+        zones = []
+        data = self.data
+        
+        for i in range(consolidation_candles, len(data) - consolidation_candles):
+            # Check for consolidation period
+            consolidation_range = data.iloc[i-consolidation_candles:i+1]
+            price_range = consolidation_range['high'].max() - consolidation_range['low'].min()
+            avg_price = consolidation_range['close'].mean()
+            
+            # Check for impulse move after consolidation
+            next_candle = data.iloc[i+1]
+            price_change = abs(next_candle['close'] - next_candle['open']) / next_candle['open']
+            
+            if price_change > impulse_threshold:
+                # Determine zone type based on price movement
+                if next_candle['close'] > next_candle['open']:  # Bullish move
+                    zone_type = "demand"
+                    zone_low = consolidation_range['low'].min()
+                    zone_high = consolidation_range['high'].max()
+                else:  # Bearish move
+                    zone_type = "supply"
+                    zone_low = consolidation_range['low'].min()
+                    zone_high = consolidation_range['high'].max()
+                
+                # Check if zone is wide enough
+                zone_width = (zone_high - zone_low) / avg_price
+                if zone_width >= min_zone_width:
+                    zones.append((zone_type, i-consolidation_candles, i, (zone_low, zone_high)))
+        
+        return zones 
