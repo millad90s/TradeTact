@@ -33,3 +33,7 @@ streamlit
 plotly
 scipy
 ccxt
+pyyaml
+altair
+altair-data-server
+altair-viewer
