@@ -67,47 +67,55 @@ ma, upper_band, lower_band = ta.bollinger_bands(
     num_std=config['technical_analysis']['bollinger_bands']['num_std']
 )
 
-# Add a checkbox to toggle Bollinger Bands
-show_bb = st.sidebar.checkbox('Show Bollinger Bands')
-
-# Add a checkbox to toggle Moving Average
-show_ma = st.sidebar.checkbox('Show Moving Average')
-
-# Add a checkbox to toggle Support and Resistance, enabled by default
-show_sr = st.sidebar.checkbox('Show Support and Resistance', value=True)
-
-# Remove duplicate checkboxes and add unique keys
+# Add checkboxes for indicators
+st.sidebar.header('Technical Indicators')
+show_ma = st.sidebar.checkbox('Show Moving Average', value=config['ui_controls']['indicators']['show_moving_average'])
+show_bb = st.sidebar.checkbox('Show Bollinger Bands', value=config['ui_controls']['indicators']['show_bollinger_bands'])
+show_sr = st.sidebar.checkbox('Show Support and Resistance', value=config['ui_controls']['indicators']['show_support_resistance'])
+show_supply_demand = st.sidebar.checkbox('Show Supply & Demand Zones', value=config['ui_controls']['indicators']['show_supply_demand'])
 
 # Bullish Patterns
 st.sidebar.subheader('Bullish Patterns')
-show_three_white_soldiers = st.sidebar.checkbox('Show Three White Soldiers', key='three_white_soldiers')
-show_bullish_harami = st.sidebar.checkbox('Show Bullish Harami', key='bullish_harami')
-show_harami_cross = st.sidebar.checkbox('Show Harami Cross', key='harami_cross')
-show_morning_star = st.sidebar.checkbox('Show Morning Star Pattern', key='morning_star')
-show_rising_three_methods = st.sidebar.checkbox('Show Rising Three Methods Pattern', key='rising_three_methods')
+show_three_white_soldiers = st.sidebar.checkbox('Show Three White Soldiers', 
+    value=config['ui_controls']['bullish_patterns']['show_three_white_soldiers'])
+show_bullish_harami = st.sidebar.checkbox('Show Bullish Harami', 
+    value=config['ui_controls']['bullish_patterns']['show_bullish_harami'])
+show_harami_cross = st.sidebar.checkbox('Show Harami Cross', 
+    value=config['ui_controls']['bullish_patterns']['show_harami_cross'])
+show_morning_star = st.sidebar.checkbox('Show Morning Star Pattern', 
+    value=config['ui_controls']['bullish_patterns']['show_morning_star'])
+show_rising_three_methods = st.sidebar.checkbox('Show Rising Three Methods Pattern', 
+    value=config['ui_controls']['bullish_patterns']['show_rising_three_methods'])
 
 # Bearish Patterns
 st.sidebar.subheader('Bearish Patterns')
-show_engulfing = st.sidebar.checkbox('Show Engulfing Patterns', key='engulfing')
-show_hanging_man = st.sidebar.checkbox('Show Hanging Man Pattern', key='hanging_man')
-show_shooting_star = st.sidebar.checkbox('Show Shooting Star Pattern', key='shooting_star')
-show_evening_star = st.sidebar.checkbox('Show Evening Star Pattern', key='evening_star')
-show_three_black_crows = st.sidebar.checkbox('Show Three Black Crows Pattern', key='three_black_crows')
-show_dark_cloud_cover = st.sidebar.checkbox('Show Dark Cloud Cover Pattern', key='dark_cloud_cover')
-show_bearish_harami = st.sidebar.checkbox('Show Bearish Harami Pattern', key='bearish_harami')
+show_engulfing = st.sidebar.checkbox('Show Engulfing Patterns', 
+    value=config['ui_controls']['bearish_patterns']['show_engulfing'])
+show_hanging_man = st.sidebar.checkbox('Show Hanging Man Pattern', 
+    value=config['ui_controls']['bearish_patterns']['show_hanging_man'])
+show_shooting_star = st.sidebar.checkbox('Show Shooting Star Pattern', 
+    value=config['ui_controls']['bearish_patterns']['show_shooting_star'])
+show_evening_star = st.sidebar.checkbox('Show Evening Star Pattern', 
+    value=config['ui_controls']['bearish_patterns']['show_evening_star'])
+show_three_black_crows = st.sidebar.checkbox('Show Three Black Crows Pattern', 
+    value=config['ui_controls']['bearish_patterns']['show_three_black_crows'])
+show_dark_cloud_cover = st.sidebar.checkbox('Show Dark Cloud Cover Pattern', 
+    value=config['ui_controls']['bearish_patterns']['show_dark_cloud_cover'])
+show_bearish_harami = st.sidebar.checkbox('Show Bearish Harami Pattern', 
+    value=config['ui_controls']['bearish_patterns']['show_bearish_harami'])
 
 # Neutral Patterns
 st.sidebar.subheader('Neutral Patterns')
-show_doji_star = st.sidebar.checkbox('Show Doji Star Pattern', key='doji_star')
-show_long_legged_doji = st.sidebar.checkbox('Show Long-Legged Doji Pattern', key='long_legged_doji')
-show_dragonfly_doji = st.sidebar.checkbox('Show Dragonfly Doji Pattern', key='dragonfly_doji')
-show_gravestone_doji = st.sidebar.checkbox('Show Gravestone Doji Pattern', key='gravestone_doji')
-
-# Add a checkbox for Hammer pattern
-show_hammer = st.sidebar.checkbox('Show Hammer Pattern', key='hammer')
-
-# Add checkboxes for supply and demand zones
-show_supply_demand = st.sidebar.checkbox('Show Supply & Demand Zones', key='supply_demand', value=True)
+show_doji_star = st.sidebar.checkbox('Show Doji Star Pattern', 
+    value=config['ui_controls']['neutral_patterns']['show_doji_star'])
+show_long_legged_doji = st.sidebar.checkbox('Show Long-Legged Doji Pattern', 
+    value=config['ui_controls']['neutral_patterns']['show_long_legged_doji'])
+show_dragonfly_doji = st.sidebar.checkbox('Show Dragonfly Doji Pattern', 
+    value=config['ui_controls']['neutral_patterns']['show_dragonfly_doji'])
+show_gravestone_doji = st.sidebar.checkbox('Show Gravestone Doji Pattern', 
+    value=config['ui_controls']['neutral_patterns']['show_gravestone_doji'])
+show_hammer = st.sidebar.checkbox('Show Hammer Pattern', 
+    value=config['ui_controls']['neutral_patterns']['show_hammer'])
 
 # Plot the candlestick chart
 fig_candlestick = go.Figure(data=[go.Candlestick(x=data_frames['1h'].index,
