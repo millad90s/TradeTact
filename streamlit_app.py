@@ -5,13 +5,20 @@ import plotly.graph_objects as go
 from technical_analysis import TechnicalAnalysis
 import ccxt
 
+# Set page config must be the first Streamlit command
+st.set_page_config(layout="wide")
+
 # Initialize Binance exchange
 exchange = ccxt.binance()
+
+# Add slider for number of candles
+st.sidebar.header('Chart Settings')
+num_candles = st.sidebar.slider('Number of Candles', 50, 200, 100, key='num_candles')
 
 # Fetch historical candlestick data
 symbol = 'BTC/USDT'  # Update with your desired trading pair
 timeframe = '1h'  # Update with your desired timeframe
-limit = 100  # Number of candlesticks to fetch
+limit = num_candles  # Number of candlesticks to fetch
 
 # Fetch data
 ohlcv = exchange.fetch_ohlcv(symbol, timeframe=timeframe, limit=limit)
@@ -29,7 +36,7 @@ data.set_index('timestamp', inplace=True)
 # Fetch 30-minute data
 symbol_30m = 'BTC/USDT'  # Update with your desired trading pair
 timeframe_30m = '30m'  # 30-minute timeframe
-limit_30m = 150  # Number of candlesticks to fetch
+limit_30m = num_candles  # Number of candlesticks to fetch
 
 # Fetch data for 30-minute timeframe
 ohlcv_30m = exchange.fetch_ohlcv(symbol_30m, timeframe=timeframe_30m, limit=limit_30m)
@@ -41,8 +48,37 @@ data_30m = pd.DataFrame(ohlcv_30m, columns=['timestamp', 'open', 'high', 'low', 
 data_30m['timestamp'] = pd.to_datetime(data_30m['timestamp'], unit='ms')
 data_30m.set_index('timestamp', inplace=True)
 
+# Fetch 15-minute data
+symbol_15m = 'BTC/USDT'
+timeframe_15m = '15m'
+limit_15m = num_candles  # Use the same number of candles
+
+# Fetch data for 15-minute timeframe
+ohlcv_15m = exchange.fetch_ohlcv(symbol_15m, timeframe=timeframe_15m, limit=limit_15m)
+
+# Convert to DataFrame
+data_15m = pd.DataFrame(ohlcv_15m, columns=['timestamp', 'open', 'high', 'low', 'close', 'volume'])
+
+# Convert the 'timestamp' column to datetime and set it as the index
+data_15m['timestamp'] = pd.to_datetime(data_15m['timestamp'], unit='ms')
+data_15m.set_index('timestamp', inplace=True)
+
+# Fetch 5-minute data
+symbol_5m = 'BTC/USDT'
+timeframe_5m = '5m'
+limit_5m = num_candles  # Use the same number of candles
+
+# Fetch data for 5-minute timeframe
+ohlcv_5m = exchange.fetch_ohlcv(symbol_5m, timeframe=timeframe_5m, limit=limit_5m)
+
+# Convert to DataFrame
+data_5m = pd.DataFrame(ohlcv_5m, columns=['timestamp', 'open', 'high', 'low', 'close', 'volume'])
+
+# Convert the 'timestamp' column to datetime and set it as the index
+data_5m['timestamp'] = pd.to_datetime(data_5m['timestamp'], unit='ms')
+data_5m.set_index('timestamp', inplace=True)
+
 # Perform technical analysis
-st.set_page_config(layout="wide")
 st.title('Technical Analysis Dashboard')
 
 # Initialize the TechnicalAnalysis class
@@ -135,11 +171,6 @@ if show_supply_demand:
         min_zone_width=min_zone_width
     )
     
-    # Debug output
-    st.write(f"Number of zones detected: {len(zones)}")
-    for zone in zones:
-        st.write(f"Zone: {zone}")
-
     # Add zones to the chart
     for zone_type, start_idx, end_idx, (zone_low, zone_high) in zones:
         # Create a rectangle for the zone
@@ -735,21 +766,11 @@ if show_gravestone_doji:
 
 # Add supply and demand zones to 30-minute chart if enabled
 if show_supply_demand:
-    # Add parameters for zone detection
-    consolidation_candles_30m = st.sidebar.slider('Consolidation Candles (30m)', 3, 10, 5, key='consolidation_candles_30m')
-    impulse_threshold_30m = st.sidebar.slider('Impulse Threshold (%) (30m)', 0.5, 5.0, 2.0, key='impulse_threshold_30m') / 100
-    min_zone_width_30m = st.sidebar.slider('Minimum Zone Width (%) (30m)', 0.1, 2.0, 1.0, key='min_zone_width_30m') / 100
-
     zones_30m = ta_30m.detect_supply_demand_zones(
-        consolidation_candles=consolidation_candles_30m,
-        impulse_threshold=impulse_threshold_30m,
-        min_zone_width=min_zone_width_30m
+        consolidation_candles=consolidation_candles,
+        impulse_threshold=impulse_threshold,
+        min_zone_width=min_zone_width
     )
-
-    # Debug output for 30-minute chart
-    st.write(f"Number of zones detected (30m): {len(zones_30m)}")
-    for zone in zones_30m:
-        st.write(f"Zone (30m): {zone}")
 
     # Add zones to the 30-minute chart
     for zone_type, start_idx, end_idx, (zone_low, zone_high) in zones_30m:
@@ -793,6 +814,202 @@ fig_candlestick_30m.update_layout(title='30-Minute Candlestick Chart',
 # Display the 30-minute candlestick chart
 st.plotly_chart(fig_candlestick_30m, use_container_width=True)
 
+# Initialize the TechnicalAnalysis class for 15-minute data
+ta_15m = TechnicalAnalysis(data_15m)
+
+# Calculate indicators for 15-minute data
+ma_15m = ta_15m.moving_average(window=ma_window)
+ma_15m, upper_band_15m, lower_band_15m = ta_15m.bollinger_bands(window=bb_window)
+support_15m, resistance_15m = ta_15m.calculate_support_resistance(order=sr_window)
+
+# Calculate strong support and resistance levels for 15-minute data
+strong_support_15m, strong_resistance_15m = ta_15m.calculate_strong_support_resistance(order=sr_window, touch_threshold=3, merge_threshold=0.01)
+
+# Plot the 15-minute candlestick chart
+fig_candlestick_15m = go.Figure(data=[go.Candlestick(x=data_15m.index,
+                open=data_15m['open'],
+                high=data_15m['high'],
+                low=data_15m['low'],
+                close=data_15m['close'],
+                name='Candlestick 15m')])
+
+# Plot moving average on the 15-minute candlestick chart if the checkbox is checked
+if show_ma:
+    fig_candlestick_15m.add_trace(go.Scatter(x=data_15m.index, y=ma_15m, mode='lines', name='Moving Average', line=dict(color='orange')))
+
+# Plot Bollinger Bands on the 15-minute candlestick chart if the checkbox is checked
+if show_bb:
+    fig_candlestick_15m.add_trace(go.Scatter(x=data_15m.index, y=upper_band_15m, mode='lines', name='Upper Band', line=dict(color='cyan', dash='dash')))
+    fig_candlestick_15m.add_trace(go.Scatter(x=data_15m.index, y=lower_band_15m, mode='lines', name='Lower Band', line=dict(color='cyan', dash='dash')))
+    fig_candlestick_15m.add_trace(go.Scatter(x=data_15m.index, y=ma_15m, mode='lines', name='Middle Band', line=dict(color='cyan', dash='dot')))
+
+# Plot the strongest support and resistance levels on the 15-minute chart if the checkbox is checked
+if show_sr:
+    for level in strong_support_15m:
+        fig_candlestick_15m.add_shape(type='line', x0=data_15m.index.min(), x1=data_15m.index.max(), y0=level, y1=level,
+                                      line=dict(color='blue', dash='dash'), name='Support')
+        fig_candlestick_15m.add_annotation(x=data_15m.index.min(), y=level,
+                                           text=f'Support: {level:.2f}',
+                                           showarrow=False,
+                                           yshift=10,
+                                           bgcolor='blue',
+                                           opacity=0.7)
+
+    for level in strong_resistance_15m:
+        fig_candlestick_15m.add_shape(type='line', x0=data_15m.index.min(), x1=data_15m.index.max(), y0=level, y1=level,
+                                      line=dict(color='red', dash='dash'), name='Resistance')
+        fig_candlestick_15m.add_annotation(x=data_15m.index.min(), y=level,
+                                           text=f'Resistance: {level:.2f}',
+                                           showarrow=False,
+                                           yshift=-10,
+                                           bgcolor='red',
+                                           opacity=0.7)
+
+# Add supply and demand zones to 15-minute chart if enabled
+if show_supply_demand:
+    zones_15m = ta_15m.detect_supply_demand_zones(
+        consolidation_candles=consolidation_candles,
+        impulse_threshold=impulse_threshold,
+        min_zone_width=min_zone_width
+    )
+
+    for zone_type, start_idx, end_idx, (zone_low, zone_high) in zones_15m:
+        fig_candlestick_15m.add_shape(
+            type="rect",
+            x0=data_15m.index[start_idx],
+            y0=zone_low,
+            x1=data_15m.index[end_idx],
+            y1=zone_high,
+            line=dict(
+                color="green" if zone_type == "demand" else "red",
+                width=2,
+            ),
+            fillcolor="green" if zone_type == "demand" else "red",
+            opacity=0.2,
+            layer="below"
+        )
+        
+        fig_candlestick_15m.add_annotation(
+            x=data_15m.index[end_idx],
+            y=zone_high if zone_type == "supply" else zone_low,
+            text=f"{zone_type.capitalize()} Zone",
+            showarrow=False,
+            font=dict(
+                color="green" if zone_type == "demand" else "red",
+                size=12
+            ),
+            bgcolor="white",
+            opacity=0.8
+        )
+
+# Update layout for 15-minute chart
+fig_candlestick_15m.update_layout(title='15-Minute Candlestick Chart',
+                                  xaxis_title='Time',
+                                  yaxis_title='Price',
+                                  xaxis_rangeslider_visible=False,
+                                  height=800)
+
+# Display the 15-minute candlestick chart
+st.plotly_chart(fig_candlestick_15m, use_container_width=True)
+
+# Initialize the TechnicalAnalysis class for 5-minute data
+ta_5m = TechnicalAnalysis(data_5m)
+
+# Calculate indicators for 5-minute data
+ma_5m = ta_5m.moving_average(window=ma_window)
+ma_5m, upper_band_5m, lower_band_5m = ta_5m.bollinger_bands(window=bb_window)
+support_5m, resistance_5m = ta_5m.calculate_support_resistance(order=sr_window)
+
+# Calculate strong support and resistance levels for 5-minute data
+strong_support_5m, strong_resistance_5m = ta_5m.calculate_strong_support_resistance(order=sr_window, touch_threshold=3, merge_threshold=0.01)
+
+# Plot the 5-minute candlestick chart
+fig_candlestick_5m = go.Figure(data=[go.Candlestick(x=data_5m.index,
+                open=data_5m['open'],
+                high=data_5m['high'],
+                low=data_5m['low'],
+                close=data_5m['close'],
+                name='Candlestick 5m')])
+
+# Plot moving average on the 5-minute candlestick chart if the checkbox is checked
+if show_ma:
+    fig_candlestick_5m.add_trace(go.Scatter(x=data_5m.index, y=ma_5m, mode='lines', name='Moving Average', line=dict(color='orange')))
+
+# Plot Bollinger Bands on the 5-minute candlestick chart if the checkbox is checked
+if show_bb:
+    fig_candlestick_5m.add_trace(go.Scatter(x=data_5m.index, y=upper_band_5m, mode='lines', name='Upper Band', line=dict(color='cyan', dash='dash')))
+    fig_candlestick_5m.add_trace(go.Scatter(x=data_5m.index, y=lower_band_5m, mode='lines', name='Lower Band', line=dict(color='cyan', dash='dash')))
+    fig_candlestick_5m.add_trace(go.Scatter(x=data_5m.index, y=ma_5m, mode='lines', name='Middle Band', line=dict(color='cyan', dash='dot')))
+
+# Plot the strongest support and resistance levels on the 5-minute chart if the checkbox is checked
+if show_sr:
+    for level in strong_support_5m:
+        fig_candlestick_5m.add_shape(type='line', x0=data_5m.index.min(), x1=data_5m.index.max(), y0=level, y1=level,
+                                      line=dict(color='blue', dash='dash'), name='Support')
+        fig_candlestick_5m.add_annotation(x=data_5m.index.min(), y=level,
+                                           text=f'Support: {level:.2f}',
+                                           showarrow=False,
+                                           yshift=10,
+                                           bgcolor='blue',
+                                           opacity=0.7)
+
+    for level in strong_resistance_5m:
+        fig_candlestick_5m.add_shape(type='line', x0=data_5m.index.min(), x1=data_5m.index.max(), y0=level, y1=level,
+                                      line=dict(color='red', dash='dash'), name='Resistance')
+        fig_candlestick_5m.add_annotation(x=data_5m.index.min(), y=level,
+                                           text=f'Resistance: {level:.2f}',
+                                           showarrow=False,
+                                           yshift=-10,
+                                           bgcolor='red',
+                                           opacity=0.7)
+
+# Add supply and demand zones to 5-minute chart if enabled
+if show_supply_demand:
+    zones_5m = ta_5m.detect_supply_demand_zones(
+        consolidation_candles=consolidation_candles,
+        impulse_threshold=impulse_threshold,
+        min_zone_width=min_zone_width
+    )
+
+    for zone_type, start_idx, end_idx, (zone_low, zone_high) in zones_5m:
+        fig_candlestick_5m.add_shape(
+            type="rect",
+            x0=data_5m.index[start_idx],
+            y0=zone_low,
+            x1=data_5m.index[end_idx],
+            y1=zone_high,
+            line=dict(
+                color="green" if zone_type == "demand" else "red",
+                width=2,
+            ),
+            fillcolor="green" if zone_type == "demand" else "red",
+            opacity=0.2,
+            layer="below"
+        )
+        
+        fig_candlestick_5m.add_annotation(
+            x=data_5m.index[end_idx],
+            y=zone_high if zone_type == "supply" else zone_low,
+            text=f"{zone_type.capitalize()} Zone",
+            showarrow=False,
+            font=dict(
+                color="green" if zone_type == "demand" else "red",
+                size=12
+            ),
+            bgcolor="white",
+            opacity=0.8
+        )
+
+# Update layout for 5-minute chart
+fig_candlestick_5m.update_layout(title='5-Minute Candlestick Chart',
+                                  xaxis_title='Time',
+                                  yaxis_title='Price',
+                                  xaxis_rangeslider_visible=False,
+                                  height=800)
+
+# Display the 5-minute candlestick chart
+st.plotly_chart(fig_candlestick_5m, use_container_width=True)
+
 # Display the data
 # st.subheader('Data Table')
 # st.write(data.head()) 
@@ -830,11 +1047,6 @@ if show_supply_demand:
         min_zone_width=min_zone_width
     )
     
-    # Debug output
-    st.write(f"Number of zones detected: {len(zones)}")
-    for zone in zones:
-        st.write(f"Zone: {zone}")
-
     # Add zones to the chart
     for zone_type, start_idx, end_idx, (zone_low, zone_high) in zones:
         # Create a rectangle for the zone
